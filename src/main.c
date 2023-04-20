@@ -6,7 +6,7 @@
 #include "input.h"
 #include "player.h"
 #include "../libs/gif/gifload.h"
-#include "..libs/libfixmath/fix16.h"
+#include "../libs/libfixmath/fix16.h"
 
 #define NIGHT_MODE
 
