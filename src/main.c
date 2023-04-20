@@ -6,7 +6,6 @@
 #include "input.h"
 #include "player.h"
 #include "../libs/gif/gifload.h"
-#include "../libs/libfixmath/fix16.h"
 
 #define NIGHT_MODE
 
@@ -86,63 +85,63 @@ void draw(void) {
   #endif
 
   // Pre-compute sine and cosine of the rotation angle
-  float sinangle = sin(player.angle);
-  float cosangle = cos(player.angle);
+  float sin_angle = sin(player.angle);
+  float cos_angle = cos(player.angle);
 
   // Left-most point of the FOV
-  float plx = cosangle * Z_FAR + sinangle * Z_FAR;
-  float ply = sinangle * Z_FAR - cosangle * Z_FAR;
+  float pl_x = cos_angle * Z_FAR + sin_angle * Z_FAR;
+  float pl_y = sin_angle * Z_FAR - cos_angle * Z_FAR;
 
   // Right-most point of the FOV
-  float prx = cosangle * Z_FAR - sinangle * Z_FAR;
-  float pry = sinangle * Z_FAR + cosangle * Z_FAR;
+  float pr_x = cos_angle * Z_FAR - sin_angle * Z_FAR;
+  float pr_y = sin_angle * Z_FAR + cos_angle * Z_FAR;
 
   // Loop 320 rays from left to right
   for (int i = 0; i < SCREEN_WIDTH; i++) {
-    float deltax = (plx + (prx - plx) / SCREEN_WIDTH * i) / Z_FAR;
-    float deltay = (ply + (pry - ply) / SCREEN_WIDTH * i) / Z_FAR;
+    float delta_x = (pl_x + (pr_x - pl_x) / SCREEN_WIDTH * i) / Z_FAR;
+    float delta_y = (pl_y + (pr_y - pl_y) / SCREEN_WIDTH * i) / Z_FAR;
 
     // Ray (x,y) coords
-    float rx = player.x;
-    float ry = player.y;
+    float r_x = player.x;
+    float r_y = player.y;
 
     // Store the tallest projected height per-ray
-    float tallestheight = SCREEN_HEIGHT;
+    float tallest_height = SCREEN_HEIGHT;
 
     // Loop all depth units until the zfar distance limit
     for (int z = 1; z < Z_FAR; z++) {
-      rx += deltax;
-      ry += deltay;
+      r_x += delta_x;
+      r_y += delta_y;
 
       // Find the offset that we have to go and fetch values from the heightmap
-      int mapoffset = ((MAP_N * ((int)(ry) & (MAP_N - 1))) + ((int)(rx) & (MAP_N - 1)));
+      int map_offset = ((MAP_N * ((int)(r_y) & (MAP_N - 1))) + ((int)(r_x) & (MAP_N - 1)));
 
       // Project height values and find the height on-screen
-      int projheight = (int)((player.height - heightmap[mapoffset]) / z * VERTICAL_SCALE_FACTOR + player.pitch);
+      int proj_height = (int)((player.height - heightmap[map_offset]) / z * VERTICAL_SCALE_FACTOR + player.pitch);
 
       // Only draw pixels if the new projected height is taller than the previous tallest height
-      if (projheight < tallestheight) {
+      if (proj_height < tallest_height) {
         float tilt = (player.roll_vel * (i / (float)SCREEN_WIDTH - 0.5) + 0.5) * SCREEN_HEIGHT / 6.0;
 
         // Draw pixels from previous max-height until the new projected height
-        for (int y = (projheight + tilt); y < (tallestheight + tilt); y++) {
+        for (int y = (proj_height + tilt); y < (tallest_height + tilt); y++) {
           if (y >= 0) {
-            draw_pixel(i, y, palette[colormap[mapoffset]]);
+            draw_pixel(i, y, palette[colormap[map_offset]]);
           }
         }
-        tallestheight = projheight;
+        tallest_height = proj_height;
       }
     }
   }
 
   // Draw HUD lines on top of the terrain
-  float midwidth = SCREEN_WIDTH / 2;
-  float midheight = SCREEN_HEIGHT / 2;
-  draw_pixel(midwidth, midheight, 0xFF00FF00);
-  draw_line(midwidth,      midheight - 10, midwidth,      midheight - 40, 0xFF00FF00);
-  draw_line(midwidth,      midheight + 10, midwidth,      midheight + 40, 0xFF00FF00);
-  draw_line(midwidth - 10, midheight,      midwidth - 40, midheight,      0xFF00FF00);
-  draw_line(midwidth + 10, midheight,      midwidth + 40, midheight,      0xFF00FF00);
+  int mid_width = SCREEN_WIDTH / 2;
+  int mid_height = SCREEN_HEIGHT / 2;
+  draw_pixel(mid_width, mid_height, 0xFF00FF00);
+  draw_line(mid_width,      mid_height - 10, mid_width,      mid_height - 40, 0xFF00FF00);
+  draw_line(mid_width,      mid_height + 10, mid_width,      mid_height + 40, 0xFF00FF00);
+  draw_line(mid_width - 10, mid_height,      mid_width - 40, mid_height,      0xFF00FF00);
+  draw_line(mid_width + 10, mid_height,      mid_width + 40, mid_height,      0xFF00FF00);
 
   // Render framebuffer to SDL texture to be displayed
   render_framebuffer();
